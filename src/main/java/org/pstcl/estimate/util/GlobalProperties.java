@@ -25,6 +25,43 @@ public class GlobalProperties {
 	@Setter
 	@Value("${admin.password}")
 	private String adminPassword;
+	
+	@Getter
+	@Setter
+	@Value("${node4.username}")
+	private String node4Username;
+
+	@Getter
+	@Setter
+	@Value("${node4.password}")
+	private String node4Password;
+	@Getter
+	@Setter
+	@Value("${node1.username}")
+	private String node1Username;
+
+	@Getter
+	@Setter
+	@Value("${node1.password}")
+	private String node1Password;
+	@Getter
+	@Setter
+	@Value("${node2.username}")
+	private String node2Username;
+
+	@Getter
+	@Setter
+	@Value("${node2.password}")
+	private String node2Password;
+	@Getter
+	@Setter
+	@Value("${node3.username}")
+	private String node3Username;
+
+	@Getter
+	@Setter
+	@Value("${node3.password}")
+	private String node3Password;
 
 	@Getter
 	@Setter

@@ -12,7 +12,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.pstcl.estimate.entity.Estimate;
 
 import lombok.Data;
@@ -41,7 +40,6 @@ public class EstimateReplicationLog {
 
 
 	@Column
-	@UpdateTimestamp
 	private LocalDateTime updateDateTime;
 
 

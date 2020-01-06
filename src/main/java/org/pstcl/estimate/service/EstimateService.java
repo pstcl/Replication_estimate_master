@@ -1,12 +1,11 @@
 package org.pstcl.estimate.service;
 
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.pstcl.estimate.entity.Estimate;
 import org.pstcl.estimate.model.EstimateDetailsModel;
 import org.pstcl.estimate.model.EstimateModel;
@@ -16,6 +15,7 @@ import org.pstcl.estimate.repository.EstimateReplicationLogRepository;
 import org.pstcl.estimate.repository.EstimateRepository;
 import org.pstcl.estimate.util.entity.EstimateReplicationLog;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -37,37 +37,72 @@ public class EstimateService {
 	private EstimateItemDetailRepository estimateItemDetailRepository;
 
 
+	//	public EstimateModel getLatestEstimatesList(HttpServletRequest request)
+	//	{
+	//		EstimateModel estimateModel=new EstimateModel();
+	//
+	//		EstimateReplicationLog latestReplicatedEstimate=replicationLogRepository.findFirstByUserNameOrderByLastAccessTimeDesc(request.getUserPrincipal().getName());
+	//		List<Estimate> list =null;
+	//
+	//		LocalDateTime lastAccessTimeByIpAndUserName=null;
+	//		if(null!=latestReplicatedEstimate)
+	//		{
+	//			lastAccessTimeByIpAndUserName=latestReplicatedEstimate.getLastAccessTime();
+	//			list =estimateRepository.findAllWithdtUpdatedAfter(lastAccessTimeByIpAndUserName);
+	//
+	//		}
+	//		else
+	//		{
+	//			list= estimateRepository.findAll();
+	//
+	//		}
+	//
+	//		estimateModel.setNewEstimates(list);
+	//		return estimateModel;
+	//	}
+
+	@Scheduled(fixedRate = 60 * 1000)
+	public void scanForUpdates() {
+		try {
+			List<EstimateReplicationLog> list= replicationLogRepository.findAll();
+			List<EstimateReplicationLog> listToBeDeleted=new ArrayList<EstimateReplicationLog>();
+			for (EstimateReplicationLog estimateReplicationLog : list) {
+				if(null==estimateReplicationLog.getUpdateDateTime()||null==estimateReplicationLog.getEstimate().getDtUpdated())
+				{
+					listToBeDeleted.add(estimateReplicationLog);
+				}
+				else if(estimateReplicationLog.getUpdateDateTime().isBefore(estimateReplicationLog.getEstimate().getDtUpdated()))
+				{
+					listToBeDeleted.add(estimateReplicationLog);
+				}
+			}
+			list.clear();
+			replicationLogRepository.deleteAll(listToBeDeleted);
+
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+
+		}
+	}
+
+
 	public EstimateModel getLatestEstimatesList(HttpServletRequest request)
 	{
 		EstimateModel estimateModel=new EstimateModel();
 
-		EstimateReplicationLog latestReplicatedEstimate=replicationLogRepository.findFirstByUserNameOrderByLastAccessTimeDesc(request.getUserPrincipal().getName());
-		List<Estimate> list =null;
-
-		LocalDateTime lastAccessTimeByIpAndUserName=null;
-		if(null!=latestReplicatedEstimate)
+		List<String> estimates= replicationLogRepository.findEstimatesByUserName(request.getUserPrincipal().getName());
+		List<Estimate> list;
+		if(CollectionUtils.isNotEmpty(estimates))
 		{
-			lastAccessTimeByIpAndUserName=latestReplicatedEstimate.getLastAccessTime();
-			list =estimateRepository.findAllWithdtUpdatedAfter(lastAccessTimeByIpAndUserName);
-
+			list= estimateRepository.findNotInList(estimates);
 		}
 		else
 		{
 			list= estimateRepository.findAll();
-
 		}
 
-		//List<String> estimates= replicationLogRepository.findEstimatesByClientIpAndUserName(request.getRemoteAddr(),request.getUserPrincipal().getName());
-		//List<Estimate> list;
-		//		if(CollectionUtils.isNotEmpty(estimates))
-		//		{
-		//			list= estimateRepository.findNotInList(estimates);
-		//		}
-		//		else
-		//		{
-		//			list= estimateRepository.findAll();
-		//		}
-		
 		estimateModel.setNewEstimates(list);
 		return estimateModel;
 	}
@@ -115,11 +150,16 @@ public class EstimateService {
 
 			if(estimate!=null)
 			{
-				EstimateReplicationLog estimateReplicationLog=new EstimateReplicationLog();
+				EstimateReplicationLog estimateReplicationLog=replicationLogRepository.findByEstimate_EstimateCodeAndUserName(estimateInRequest,request.getRemoteUser());
+				if(null==estimateReplicationLog)
+				{
+					estimateReplicationLog=new EstimateReplicationLog();
+				}
 				estimateReplicationLog.setEstimate(estimate);
 				estimateReplicationLog.setClientIp(request.getRemoteAddr());
 				estimateReplicationLog.setClientName(request.getRemoteHost());
 				estimateReplicationLog.setUserName(request.getUserPrincipal().getName());
+				estimateReplicationLog.setUpdateDateTime(estimate.getDtUpdated());
 				replicationLogRepository.save(estimateReplicationLog);
 			}
 		}
@@ -137,8 +177,11 @@ public class EstimateService {
 
 			if(estimate!=null)
 			{
-				EstimateReplicationLog estimateReplicationLog=replicationLogRepository.findByEstimate(estimateInRequest);
-				replicationLogRepository.delete(estimateReplicationLog);
+				EstimateReplicationLog estimateReplicationLog=replicationLogRepository.findByEstimate_EstimateCodeAndUserName(estimateInRequest,request.getRemoteUser());
+				if(null!=estimateReplicationLog)
+				{
+					replicationLogRepository.delete(estimateReplicationLog);
+				}
 			}
 		}
 		return estimate;

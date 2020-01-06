@@ -34,6 +34,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	          .and()
 	          .withUser(globalProperties.getAdminUsername())
 	          .password(encoder.encode(globalProperties.getAdminPassword()))
+	          .roles("USER", "ADMIN")
+	          .and()
+	          .withUser(globalProperties.getNode1Username())
+	          .password(encoder.encode(globalProperties.getNode1Password()))
+	          .roles("USER", "ADMIN").and()
+	          .withUser(globalProperties.getNode2Username())
+	          .password(encoder.encode(globalProperties.getNode2Password()))
+	          .roles("USER", "ADMIN").and()
+	          .withUser(globalProperties.getNode3Username())
+	          .password(encoder.encode(globalProperties.getNode3Password()))
+	          .roles("USER", "ADMIN").and()
+	          .withUser(globalProperties.getNode4Username())
+	          .password(encoder.encode(globalProperties.getNode4Password()))
 	          .roles("USER", "ADMIN");
 	    	
 	    }
