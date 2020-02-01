@@ -9,10 +9,10 @@
 		<version>2.1.7.RELEASE</version>
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>replication</groupId>
-	<artifactId>org.pstcl.master</artifactId>
+	<groupId>org.pstcl.master</groupId>
+	<artifactId>replication-master</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>estimate-master-api</name>
+	<name>replication-master</name>
 	<description> Master for Estimate Replication</description>
 
 	<properties>
